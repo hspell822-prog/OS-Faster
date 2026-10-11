@@ -18,7 +18,7 @@ Ek browser-based operating system jo HTML, CSS aur JavaScript mein bana hai.
 4. Enjoy!
 
 ## Screenshots
-(apne screenshots yahan daalo)
+<img width="1920" height="940" alt="Screenshot_2026-10-11_18-27-47" src="https://github.com/user-attachments/assets/26ee60fb-2181-4f61-b18b-5d236da73e5b" />
 
 ## Tech Stack
 - HTML5
