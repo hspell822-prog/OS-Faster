@@ -12,10 +12,10 @@ Ek browser-based operating system jo HTML, CSS aur JavaScript mein bana hai.
 - 🎬 Boot animation
 - 🖱️ Right-click context menu
 
-## Kaise chalao
-1. Repo clone karo
-2. `index.html` browser mein kholo
-3. Enjoy!
+## Kaise chalao / howw to use it
+1.click below link
+2. https://hspell822-prog.github.io/OS-Faster/
+4. Enjoy!
 
 ## Screenshots
 (apne screenshots yahan daalo)
@@ -25,5 +25,5 @@ Ek browser-based operating system jo HTML, CSS aur JavaScript mein bana hai.
 - CSS3 (backdrop-filter, gradients, animations)
 - Vanilla JavaScript
 
-## Banaya
-Hack Club Terra ke liye
+## built
+for Hack Club Terra
