@@ -7,23 +7,32 @@
 </head>
 <body>
 
-<!-- Boot Screen -->
-<div id="boot-screen">
-  <h1>
-    <span class="box-fast">
-      <span class="f-letter">F</span><span class="f-letter">a</span><span class="f-letter">s</span><span class="f-letter">t</span>
-    </span>
-    <span class="box-fast">
-      <span class="letter-o">O</span><span class="letter-s">S</span>
-    </span>
-  </h1>
-  <p>Loading...</p>
-</div>
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Boot Screen -->
+  <div id="boot-screen">
+    <h1>
+      <span class="box-fast">
+        <span class="f-letter">F</span><span class="f-letter">a</span><span class="f-letter">s</span><span class="f-letter">t</span>
+      </span>
+      <span class="box-os">
+        <span class="letter-o">O</span><span class="letter-s">S</span>
+      </span>
+    </h1>
+    <div class="boot-loading">
+      <div class="spinner"></div>
+      <span>Loading...</span>
+    </div>
+  </div>
+
   <!-- Desktop Icons -->
   <div id="desktop">
     <div class="icon" data-app="calculator">🧮<span>Calculator</span></div>
     <div class="icon" data-app="notes">📝<span>Notes</span></div>
     <div class="icon" data-app="terminal">💻<span>Terminal</span></div>
+    <div class="icon" data-app="gallery">🖼️<span>Gallery</span></div>
+    <div class="icon" data-app="game">🐍<span>Snake Game</span></div>
   </div>
 
   <!-- Windows Container -->
@@ -33,6 +42,16 @@
   <div id="taskbar">
     <button id="start-btn">⊞ Start</button>
     <div id="taskbar-apps"></div>
+    <div id="theme-picker">
+      <button id="theme-btn">🎨</button>
+      <div id="theme-menu" class="hidden">
+        <div class="theme-option" data-theme="cyberpunk">🌌 Cyberpunk</div>
+        <div class="theme-option" data-theme="matrix">🍃 Matrix</div>
+        <div class="theme-option" data-theme="ocean">🌊 Ocean</div>
+        <div class="theme-option" data-theme="sunset">🔥 Sunset</div>
+        <div class="theme-option" data-theme="default">⬛ Default</div>
+      </div>
+    </div>
     <div id="clock">00:00:00</div>
   </div>
 
@@ -41,6 +60,8 @@
     <div class="menu-item" data-app="calculator">🧮 Calculator</div>
     <div class="menu-item" data-app="notes">📝 Notes</div>
     <div class="menu-item" data-app="terminal">💻 Terminal</div>
+    <div class="menu-item" data-app="gallery">🖼️ Gallery</div>
+    <div class="menu-item" data-app="game">🐍 Snake Game</div>
   </div>
 
   <!-- Context Menu (Right-click) -->
