@@ -6,13 +6,23 @@ function updateClock() {
   const hours = now.getHours().toString().padStart(2, '0');
   const minutes = now.getMinutes().toString().padStart(2, '0');
   const seconds = now.getSeconds().toString().padStart(2, '0');
-  document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+  const clock = document.getElementById('clock');
+  clock.textContent = `${hours}:${minutes}:${seconds}`;
+
+  // Tooltip mein date
+  clock.title = now.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 }
 updateClock();
 setInterval(updateClock, 1000);
 
 // ===== Z-INDEX TRACKER =====
 let zIndex = 100;
+
 // ===== GALLERY WALLPAPERS =====
 const galleryWallpapers = [
   // 🌌 Space / Galaxy
@@ -57,6 +67,25 @@ const galleryWallpapers = [
   'https://images.unsplash.com/photo-1511497584788-876760111969?w=1920',
   'https://images.unsplash.com/photo-1476231682828-37e571bc172f?w=1920'
 ];
+
+// ===== TOAST NOTIFICATIONS =====
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add('hiding');
+    setTimeout(() => {
+      toast.remove();
+    }, 300);
+  }, 3000);
+}
+
 // ===== START MENU =====
 const startBtn = document.getElementById('start-btn');
 const startMenu = document.getElementById('start-menu');
@@ -81,10 +110,10 @@ document.querySelectorAll('.icon, .menu-item').forEach(el => {
 function openWindow(appName) {
   const win = document.createElement('div');
   win.className = 'window';
-  const offset = document.querySelectorAll('.window').length*30;
+  const offset = document.querySelectorAll('.window').length * 30;
   win.style.top = (80 + offset) + 'px';
-  win.style.left = (100 + offset) +'px';
-  if (appName === 'gallery'){
+  win.style.left = (100 + offset) + 'px';
+  if (appName === 'gallery') {
     win.style.width = '700px';
     win.style.height = '500px';
   }
@@ -147,10 +176,10 @@ function openWindow(appName) {
   // CLOSE
   win.querySelector('.close-btn').addEventListener('click', () => {
     win.classList.add('closing');
-    setTimeout(()=>{
+    setTimeout(() => {
       win.remove();
       taskBtn.remove();
-    },200);
+    }, 200);
   });
 
   // Focus on click
@@ -180,7 +209,34 @@ function makeDraggable(win, handle) {
   });
 
   document.addEventListener('mouseup', () => {
+    if (!dragging) return;
     dragging = false;
+
+    const rect = win.getBoundingClientRect();
+    const screenW = window.innerWidth;
+
+    // Top pe → maximize
+    if (rect.top < 10) {
+      win.style.top = '0';
+      win.style.left = '0';
+      win.style.width = '100vw';
+      win.style.height = 'calc(100vh - 48px)';
+      win.dataset.maximized = 'true';
+    }
+    // Left pe → half
+    else if (rect.left < 10) {
+      win.style.top = '0';
+      win.style.left = '0';
+      win.style.width = '50vw';
+      win.style.height = 'calc(100vh - 48px)';
+    }
+    // Right pe → half
+    else if (rect.right > screenW - 10) {
+      win.style.top = '0';
+      win.style.left = '50vw';
+      win.style.width = '50vw';
+      win.style.height = 'calc(100vh - 48px)';
+    }
   });
 }
 
@@ -190,7 +246,8 @@ function getAppName(appName) {
   if (appName === 'notes') return 'Notes';
   if (appName === 'terminal') return 'Terminal';
   if (appName === 'gallery') return 'Gallery';
-  if (appName === 'game') return 'Snake Game'
+  if (appName === 'game') return 'Snake Game';
+  if (appName === 'weather') return 'Weather';
   return 'Unknown App';
 }
 
@@ -233,17 +290,21 @@ function getAppContent(appName) {
       </div>
     `;
   }
+
   if (appName === 'game') {
-  return `
-    <div class="game-info">
-      <span>Score: <span class="score" id="snake-score">0</span></span>
-      <span>High: <span class="score" id="snake-high">0</span></span>
-    </div>
-    <canvas id="snake-canvas" width="400" height="400"></canvas>
-    <div id="snake-message"></div>
-    <button class="game-btn" id="snake-restart">🔄 Restart</button>
-  `;
-}
+    return `
+      <div class="game-info">
+        <span>Score: <span class="score" id="snake-score">0</span></span>
+        <span>High: <span class="score" id="snake-high">0</span></span>
+      </div>
+      <canvas id="snake-canvas" width="400" height="400"></canvas>
+      <div id="snake-message"></div>
+      <button class="game-btn" id="snake-restart">🔄 Restart</button>
+    `;
+  }
+  if(appName === 'weather'){
+    return '<div class="weather-search"><input id="weather-city" placeholder="Enter City name"><button id="weather-search-btn">🔍</button></div><div id="weather-result" class="weather-result"><p>Enter City Name Or 📍 Click button</p></div><button class="game-btn" id="weather-locate" style="width:100%;margin-top:10px;">📍 My Location</button><div class="weather-history" id="weather-history"></div>';
+  }
   return '<p>App not found</p>';
 }
 
@@ -254,6 +315,7 @@ function initApp(appName, win) {
   if (appName === 'terminal') initTerminal(win);
   if (appName === 'gallery') initGallery(win);
   if (appName === 'game') initSnakeGame(win);
+  if (appName === 'weather') initWeather(win);
 }
 
 // ===== CALCULATOR =====
@@ -349,6 +411,8 @@ function initGallery(win) {
 
       items.forEach(i => i.classList.remove('selected'));
       item.classList.add('selected');
+
+      showToast('Wallpaper badal gaya! 🎨', 'success');
     });
   });
 
@@ -360,7 +424,15 @@ function initGallery(win) {
     if (url) {
       setWallpaper(url);
       localStorage.setItem('fastos-wallpaper', url);
+      showToast('Custom wallpaper lag gaya! ✅', 'success');
+    } else {
+      showToast('Pehle URL daalo!', 'error');
     }
+  });
+
+  // Enter key se apply
+  customInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') applyBtn.click();
   });
 
   // Current wallpaper highlight
@@ -381,7 +453,7 @@ function setWallpaper(url) {
     document.body.style.backgroundImage = `url('${url}')`;
   };
   img.onerror = () => {
-    alert('Ye image load nahi ho rahi. URL check karo.');
+    showToast('Ye image load nahi ho rahi. URL check karo.', 'error');
   };
   img.src = url;
 }
@@ -468,7 +540,7 @@ function applyTheme(themeName) {
   localStorage.setItem('fastos-theme', themeName);
 }
 
-// Saved theme load karo
+// Saved theme load karo (bina toast ke)
 const savedTheme = localStorage.getItem('fastos-theme') || 'default';
 applyTheme(savedTheme);
 
@@ -489,6 +561,7 @@ document.querySelectorAll('.theme-option').forEach(opt => {
     e.stopPropagation();
     applyTheme(opt.dataset.theme);
     themeMenu.classList.add('hidden');
+    showToast(`Theme: ${opt.dataset.theme} 🎨`, 'info');
   });
 });
 
@@ -498,7 +571,7 @@ if (savedWallpaper) {
   document.body.style.backgroundImage = `url('${savedWallpaper}')`;
 }
 
-// ======== Snake Game ======== 
+// ===== SNAKE GAME =====
 function initSnakeGame(win) {
   const canvas = win.querySelector('#snake-canvas');
   const ctx = canvas.getContext('2d');
@@ -617,6 +690,7 @@ function initSnakeGame(win) {
       high = score;
       highEl.textContent = high;
       localStorage.setItem('fastos-snake-high', high);
+      showToast(`Naya high score: ${high}! 🏆`, 'success');
     }
   }
 
@@ -656,43 +730,183 @@ function initSnakeGame(win) {
   start();
 }
 
-// ======== key board short cut
-
-document.addEventListener('keydown',(e)=>{
-  //ctrl +N new note
-  if(e.ctrlKey&&e.key=='n'){
+// ===== KEYBOARD SHORTCUTS =====
+document.addEventListener('keydown', (e) => {
+  // Ctrl + N → New Note
+  if (e.ctrlKey && e.key === 'n') {
     e.preventDefault();
     openWindow('notes');
   }
-  // ctrl+t terminal
-  if(e.ctrlKey&&e.key ==='t'){
+
+  // Ctrl + T → Terminal
+  if (e.ctrlKey && e.key === 't') {
     e.preventDefault();
     openWindow('terminal');
   }
-  //ctrl + G Gallery
-  if(e.ctrlKey&&e.key==='g'){
-    e.preventDefault()
+
+  // Ctrl + G → Gallery
+  if (e.ctrlKey && e.key === 'g') {
+    e.preventDefault();
     openWindow('gallery');
   }
-  // Escape sare menu band 
-  if(e.key === 'Escape'){
+
+  // Ctrl + K → Calculator
+  if (e.ctrlKey && e.key === 'c') {
+    e.preventDefault();
+    openWindow('calculator');
+  }
+
+  // Escape → saare menus band
+  if (e.key === 'Escape') {
     document.getElementById('start-menu').classList.add('hidden');
     document.getElementById('context-menu').classList.add('hidden');
-    document.getElementById('theme-menu').classList.add('hidden');    
+    document.getElementById('theme-menu').classList.add('hidden');
   }
-})
+});
+// ===== WEATHER APP =====
+function initWeather(win) {
+  const cityInput = win.querySelector('#weather-city');
+  const searchBtn = win.querySelector('#weather-search-btn');
+  const locateBtn = win.querySelector('#weather-locate');
+  const resultDiv = win.querySelector('#weather-result');
+  const historyDiv = win.querySelector('#weather-history');
 
-// ======= Toast notifications
+  // Weather code → emoji + description
+  function getWeatherInfo(code) {
+    const map = {
+      0: { icon: '☀️', desc: 'Clear sky' },
+      1: { icon: '🌤️', desc: 'Mainly clear' },
+      2: { icon: '⛅', desc: 'Partly cloudy' },
+      3: { icon: '☁️', desc: 'Overcast' },
+      45: { icon: '🌫️', desc: 'Foggy' },
+      48: { icon: '🌫️', desc: 'Foggy' },
+      51: { icon: '🌦️', desc: 'Light drizzle' },
+      53: { icon: '🌦️', desc: 'Drizzle' },
+      55: { icon: '🌧️', desc: 'Heavy drizzle' },
+      61: { icon: '🌧️', desc: 'Light rain' },
+      63: { icon: '🌧️', desc: 'Rain' },
+      65: { icon: '🌧️', desc: 'Heavy rain' },
+      71: { icon: '🌨️', desc: 'Light snow' },
+      73: { icon: '🌨️', desc: 'Snow' },
+      75: { icon: '❄️', desc: 'Heavy snow' },
+      80: { icon: '🌦️', desc: 'Rain showers' },
+      95: { icon: '⛈️', desc: 'Thunderstorm' }
+    };
+    return map[code] || { icon: '🌡️', desc: 'Unknown' };
+  }
 
-function showToast(message,type = 'info'){
-  const container = document.getElementById('toast-container');
-  const toast = document.createElement('div');
-toast.className = `toast ${type}`;   // ✅  toast.textContent = message;
-  container.appendChild(toast);
-setTimeout(() => {
-  toast.classList.add('hiding');
-  setTimeout(() => {
-    toast.remove();
-  }, 300);
-}, 3000);
+  // Weather data fetch karo
+  async function fetchWeather(lat, lon, cityName) {
+    try {
+      resultDiv.innerHTML = '<div class="weather-loading">⏳ Loading...</div>';
+
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const current = data.current;
+      const info = getWeatherInfo(current.weather_code);
+
+      resultDiv.innerHTML = `
+        <div class="weather-icon-big">${info.icon}</div>
+        <div class="weather-city">${cityName}</div>
+        <div class="weather-temp">${Math.round(current.temperature_2m)}°C</div>
+        <div class="weather-desc">${info.desc}</div>
+        <div class="weather-details">
+          <div class="weather-detail">💧 Humidity<strong>${current.relative_humidity_2m}%</strong></div>
+          <div class="weather-detail">💨 Wind<strong>${current.wind_speed_10m} km/h</strong></div>
+        </div>
+      `;
+
+      saveToHistory(cityName);
+      showToast(`${cityName}: ${Math.round(current.temperature_2m)}°C ${info.icon}`, 'success');
+    } catch (err) {
+      resultDiv.innerHTML = '<p style="color:#e74c3c;">❌ Weather load nahi ho saka</p>';
+      showToast('Weather load nahi ho saka', 'error');
+    }
+  }
+
+  // City search karo
+  async function searchCity(city) {
+    if (!city.trim()) {
+      showToast('City name daalo!', 'error');
+      return;
+    }
+
+    try {
+      resultDiv.innerHTML = '<div class="weather-loading">🔍 Searching...</div>';
+
+      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (!data.results || data.results.length === 0) {
+        resultDiv.innerHTML = '<p style="color:#e74c3c;">❌ City nahi mili</p>';
+        showToast('City nahi mili!', 'error');
+        return;
+      }
+
+      const place = data.results[0];
+      await fetchWeather(place.latitude, place.longitude, place.name);
+    } catch (err) {
+      resultDiv.innerHTML = '<p style="color:#e74c3c;">❌ Error</p>';
+      showToast('Error aa gaya', 'error');
+    }
+  }
+
+  // Search button
+  searchBtn.addEventListener('click', () => searchCity(cityInput.value));
+  cityInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchCity(cityInput.value);
+  });
+
+  // GPS location
+  locateBtn.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      showToast('GPS support nahi hai', 'error');
+      return;
+    }
+
+    resultDiv.innerHTML = '<div class="weather-loading">📍 Locating...</div>';
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        fetchWeather(pos.coords.latitude, pos.coords.longitude, 'My Location');
+      },
+      () => {
+        resultDiv.innerHTML = '<p style="color:#e74c3c;">❌ Location access nahi mila</p>';
+        showToast('Location access denied', 'error');
+      }
+    );
+  });
+
+  // History save
+  function saveToHistory(city) {
+    let history = JSON.parse(localStorage.getItem('fastos-weather-history') || '[]');
+    history = history.filter(c => c !== city);
+    history.unshift(city);
+    history = history.slice(0, 5);
+    localStorage.setItem('fastos-weather-history', JSON.stringify(history));
+    renderHistory();
+  }
+
+  // History render
+  function renderHistory() {
+    const history = JSON.parse(localStorage.getItem('fastos-weather-history') || '[]');
+    if (history.length === 0) {
+      historyDiv.innerHTML = '';
+      return;
+    }
+    historyDiv.innerHTML = `
+      <h4>Recent:</h4>
+      ${history.map(c => `<span class="history-item" data-city="${c}">${c}</span>`).join('')}
+    `;
+    historyDiv.querySelectorAll('.history-item').forEach(el => {
+      el.addEventListener('click', () => {
+        cityInput.value = el.dataset.city;
+        searchCity(el.dataset.city);
+      });
+    });
+  }
+
+  renderHistory();
 }
