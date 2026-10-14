@@ -232,8 +232,7 @@ function makeDraggable(win, handle) {
     }
     // Right pe → half
     else if (rect.right > screenW - 10) {
-      win.style.top = '0';
-      win.style.left = '50vw';
+      win.style.top = '0';      win.style.left = '50vw';
       win.style.width = '50vw';
       win.style.height = 'calc(100vh - 48px)';
     }
@@ -248,6 +247,7 @@ function getAppName(appName) {
   if (appName === 'gallery') return 'Gallery';
   if (appName === 'game') return 'Snake Game';
   if (appName === 'weather') return 'Weather';
+  if (appName === 'clock') return 'Clock';
   return 'Unknown App';
 }
 
@@ -305,6 +305,45 @@ function getAppContent(appName) {
   if(appName === 'weather'){
     return '<div class="weather-search"><input id="weather-city" placeholder="Enter City name"><button id="weather-search-btn">🔍</button></div><div id="weather-result" class="weather-result"><p>Enter City Name Or 📍 Click button</p></div><button class="game-btn" id="weather-locate" style="width:100%;margin-top:10px;">📍 My Location</button><div class="weather-history" id="weather-history"></div>';
   }
+  if (appName === 'clock') {
+  return `
+    <div class="clock-tabs">
+      <button class="clock-tab active" data-tab="stopwatch">⏱️ Stopwatch</button>
+      <button class="clock-tab" data-tab="timer">⏰ Timer</button>
+    </div>
+
+    <!-- Stopwatch -->
+    <div class="stopwatch-panel active" id="stopwatch-panel">
+      <div class="clock-display" id="sw-display">00:00:00</div>
+      <div class="clock-controls">
+        <button class="clock-btn" id="sw-start">▶ Start</button>
+        <button class="clock-btn secondary" id="sw-lap">🏁 Lap</button>
+        <button class="clock-btn danger" id="sw-reset">🔄 Reset</button>
+      </div>
+      <div class="laps-list" id="sw-laps"></div>
+    </div>
+
+    <!-- Timer -->
+    <div class="timer-panel" id="timer-panel">
+      <div class="timer-inputs">
+        <div>
+          <label>Minutes</label>
+          <input type="number" id="timer-min" value="5" min="0" max="99" />
+        </div>
+        <div>
+          <label>Seconds</label>
+          <input type="number" id="timer-sec" value="0" min="0" max="59" />
+        </div>
+      </div>
+      <div class="clock-display" id="timer-display">05:00</div>
+      <div class="clock-controls">
+        <button class="clock-btn" id="timer-start">▶ Start</button>
+        <button class="clock-btn secondary" id="timer-pause">⏸ Pause</button>
+        <button class="clock-btn danger" id="timer-reset">🔄 Reset</button>
+      </div>
+    </div>
+  `;
+}
   return '<p>App not found</p>';
 }
 
@@ -316,6 +355,7 @@ function initApp(appName, win) {
   if (appName === 'gallery') initGallery(win);
   if (appName === 'game') initSnakeGame(win);
   if (appName === 'weather') initWeather(win);
+  if (appName === 'clock') initClock(win);
 }
 
 // ===== CALCULATOR =====
@@ -909,4 +949,185 @@ function initWeather(win) {
   }
 
   renderHistory();
+}
+// ===== CLOCK APP (Timer + Stopwatch) =====
+function initClock(win) {
+  // ===== TABS =====
+  const tabs = win.querySelectorAll('.clock-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      win.querySelectorAll('.stopwatch-panel, .timer-panel').forEach(p => p.classList.remove('active'));
+      win.querySelector('#' + tab.dataset.tab + '-panel').classList.add('active');
+    });
+  });
+
+  // ===== STOPWATCH =====
+  const swDisplay = win.querySelector('#sw-display');
+  const swStart = win.querySelector('#sw-start');
+  const swLap = win.querySelector('#sw-lap');
+  const swReset = win.querySelector('#sw-reset');
+  const swLaps = win.querySelector('#sw-laps');
+
+  let swRunning = false;
+  let swStartTime = 0;
+  let swElapsed = 0;
+  let swInterval = null;
+  let lapCount = 0;
+
+  function formatTime(ms) {
+    const totalSec = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSec / 3600).toString().padStart(2, '0');
+    const minutes = Math.floor((totalSec % 3600) / 60).toString().padStart(2, '0');
+    const seconds = (totalSec % 60).toString().padStart(2, '0');
+    const centis = Math.floor((ms % 1000) / 10).toString().padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}.${centis}`;
+  }
+
+  function updateSW() {
+    swElapsed = Date.now() - swStartTime;
+    swDisplay.textContent = formatTime(swElapsed);
+  }
+
+  swStart.addEventListener('click', () => {
+    if (swRunning) {
+      // Stop
+      clearInterval(swInterval);
+      swRunning = false;
+      swStart.textContent = '▶ Start';
+      swStart.classList.remove('secondary');
+    } else {
+      // Start
+      swStartTime = Date.now() - swElapsed;
+      swInterval = setInterval(updateSW, 10);
+      swRunning = true;
+      swStart.textContent = '⏸ Stop';
+      swStart.classList.add('secondary');
+    }
+  });
+
+  swLap.addEventListener('click', () => {
+    if (!swRunning && swElapsed === 0) return;
+    lapCount++;
+    const lap = document.createElement('div');
+    lap.className = 'lap-item';
+    lap.innerHTML = `<span>Lap ${lapCount}</span><span>${formatTime(swElapsed)}</span>`;
+    swLaps.prepend(lap);
+  });
+
+  swReset.addEventListener('click', () => {
+    clearInterval(swInterval);
+    swRunning = false;
+    swElapsed = 0;
+    lapCount = 0;
+    swDisplay.textContent = '00:00:00.00';
+    swStart.textContent = '▶ Start';
+    swStart.classList.remove('secondary');
+    swLaps.innerHTML = '';
+  });
+
+  // ===== TIMER =====
+  const timerDisplay = win.querySelector('#timer-display');
+  const timerMin = win.querySelector('#timer-min');
+  const timerSec = win.querySelector('#timer-sec');
+  const timerStart = win.querySelector('#timer-start');
+  const timerPause = win.querySelector('#timer-pause');
+  const timerReset = win.querySelector('#timer-reset');
+
+  let timerRunning = false;
+  let timerRemaining = 0;  // milliseconds
+  let timerInterval = null;
+
+  function formatTimer(ms) {
+    const totalSec = Math.ceil(ms / 1000);
+    const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+    const s = (totalSec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function updateTimerDisplay() {
+    timerDisplay.textContent = formatTimer(timerRemaining);
+  }
+
+  // Input change → display update
+  function syncFromInputs() {
+    const m = parseInt(timerMin.value) || 0;
+    const s = parseInt(timerSec.value) || 0;
+    timerRemaining = (m * 60 + s) * 1000;
+    updateTimerDisplay();
+  }
+
+  timerMin.addEventListener('input', syncFromInputs);
+  timerSec.addEventListener('input', syncFromInputs);
+
+  // Alarm sound (Web Audio API — no file needed)
+  function playAlarm() {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // 3 beeps
+    for (let i = 0; i < 3; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 800;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.5);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.5 + 0.4);
+      osc.start(ctx.currentTime + i * 0.5);
+      osc.stop(ctx.currentTime + i * 0.5 + 0.4);
+    }
+  }
+
+  timerStart.addEventListener('click', () => {
+    if (timerRunning) return;
+
+    if (timerRemaining === 0) {
+      syncFromInputs();
+      if (timerRemaining === 0) {
+        showToast('Pehle time set karo!', 'error');
+        return;
+      }
+    }
+
+    const endTime = Date.now() + timerRemaining;
+    timerRunning = true;
+    timerStart.disabled = true;
+
+    timerInterval = setInterval(() => {
+      timerRemaining = endTime - Date.now();
+
+      if (timerRemaining <= 0) {
+        timerRemaining = 0;
+        updateTimerDisplay();
+        clearInterval(timerInterval);
+        timerRunning = false;
+        timerStart.disabled = false;
+        playAlarm();
+        showToast('⏰ Time up!', 'success');
+        return;
+      }
+
+      updateTimerDisplay();
+    }, 100);
+  });
+
+  timerPause.addEventListener('click', () => {
+    if (!timerRunning) return;
+    clearInterval(timerInterval);
+    timerRunning = false;
+    timerStart.disabled = false;
+  });
+
+  timerReset.addEventListener('click', () => {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    timerStart.disabled = false;
+    syncFromInputs();
+  });
+
+  // Initial
+  syncFromInputs();
 }
